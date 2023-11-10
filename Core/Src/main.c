@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "DHT.h"
+#include "stm32f4xx_hal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,7 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+DHT_DataTypedef DHT22_Data;
 /* USER CODE END 0 */
 
 /**
@@ -94,12 +95,69 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  float Temperature, Humidity;
+
+  const uint8_t lvl1_warn = 0;
+  const uint16_t lvl2_warn = 1000;
+  const uint16_t lvl3_warn = 7500;
+  const uint16_t lvl4_warn = 25000;
+  const uint16_t lvl5_warn = 59999;
+
+
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+
+  char message[25];
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  DHT_GetData(&DHT22_Data);
+	  Temperature = DHT22_Data.Temperature;
+	  Humidity = DHT22_Data.Humidity;
+
+	  sprintf(message, "Temperature: %.2f, Humidity: %.2f\r\n\n", Temperature, Humidity);
+	  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 10);
+
+	  // TEMPERATURE
+	  if ((Temperature >= 200) && (Temperature <= 260)){
+			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl1_warn);
+		  }
+	  else if ((Temperature > 260 && Temperature <= 280) || (Temperature >= 180 && Temperature < 200)) {
+			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl2_warn);
+		  }
+	  else if ((Temperature > 280 && Temperature <= 300) || (Temperature >= 160 && Temperature < 180)) {
+			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl3_warn);
+		  }
+	  else if ((Temperature > 300 && Temperature <= 320) || (Temperature >= 140 && Temperature < 160)) {
+			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl4_warn);
+		  }
+	  else {
+			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl5_warn);
+		  }
+
+	  // HUMIDITY
+	  if ((Humidity >= 300) && (Humidity <= 700)){
+	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl1_warn);
+	 	  }
+	  else if ((Humidity > 700 && Humidity <= 775) || (Humidity >= 225 && Humidity < 300)) {
+	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl2_warn);
+	 	  }
+	  else if ((Humidity > 775 && Humidity <= 850) || (Humidity >= 150 && Humidity < 225)) {
+	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl3_warn);
+	 	  }
+	  else if ((Humidity > 850 && Humidity <= 925) || (Humidity >= 75 && Humidity < 150)) {
+	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl4_warn);
+	 	  }
+	  else {
+	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl5_warn);
+	 	  }
+
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -276,6 +334,7 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
@@ -283,6 +342,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
