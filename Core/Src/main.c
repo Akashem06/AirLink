@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "DHT.h"
+#include "liquidcrystal_i2c.h"
 #include "stm32f4xx_hal.h"
 /* USER CODE END Includes */
 
@@ -41,6 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart2;
@@ -54,6 +57,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,6 +97,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_USART2_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   float Temperature, Humidity;
@@ -103,12 +108,12 @@ int main(void)
   const uint16_t lvl4_warn = 25000;
   const uint16_t lvl5_warn = 59999;
 
-
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 
-  char message[25];
+  char temp_msg[25];
+  char hum_msg[25];
 
   /* USER CODE END 2 */
 
@@ -120,8 +125,8 @@ int main(void)
 	  Temperature = DHT22_Data.Temperature;
 	  Humidity = DHT22_Data.Humidity;
 
-	  sprintf(message, "Temperature: %.2f, Humidity: %.2f\r\n\n", Temperature, Humidity);
-	  HAL_UART_Transmit(&huart2, (uint8_t *)message, strlen(message), 10);
+	  sprintf(temp_msg, "Temperature: %.2f", Temperature/10);
+	  sprintf(hum_msg, "Humidity: %.2f", Humidity/10);
 
 	  // TEMPERATURE
 	  if ((Temperature >= 200) && (Temperature <= 260)){
@@ -157,6 +162,14 @@ int main(void)
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl5_warn);
 	 	  }
 
+	  HD44780_Init(4);
+	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+
+	  HD44780_SetCursor(0,1);
+	  HD44780_PrintStr(temp_msg);
+
+	  HD44780_SetCursor(0,2);
+	  HD44780_PrintStr(hum_msg);
 	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
@@ -209,6 +222,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -342,6 +389,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
