@@ -125,41 +125,51 @@ int main(void)
 	  Temperature = DHT22_Data.Temperature;
 	  Humidity = DHT22_Data.Humidity;
 
-	  sprintf(temp_msg, "Temperature: %.2f", Temperature/10);
-	  sprintf(hum_msg, "Humidity: %.2f", Humidity/10);
+	  sprintf(temp_msg, "Temperature: %.2f", Temperature/10.00);
+	  sprintf(hum_msg, "Humidity: %.2f", Humidity/10.00);
 
 	  // TEMPERATURE
 	  if ((Temperature >= 200) && (Temperature <= 260)){
 			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl1_warn);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 		  }
 	  else if ((Temperature > 260 && Temperature <= 280) || (Temperature >= 180 && Temperature < 200)) {
 			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl2_warn);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 		  }
 	  else if ((Temperature > 280 && Temperature <= 300) || (Temperature >= 160 && Temperature < 180)) {
 			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl3_warn);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 		  }
 	  else if ((Temperature > 300 && Temperature <= 320) || (Temperature >= 140 && Temperature < 160)) {
 			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl4_warn);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 		  }
 	  else {
 			  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_1, lvl5_warn);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 		  }
 
 	  // HUMIDITY
 	  if ((Humidity >= 300) && (Humidity <= 700)){
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl1_warn);
+	 		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, RESET);
 	 	  }
 	  else if ((Humidity > 700 && Humidity <= 775) || (Humidity >= 225 && Humidity < 300)) {
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl2_warn);
+	 		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 	 	  }
 	  else if ((Humidity > 775 && Humidity <= 850) || (Humidity >= 150 && Humidity < 225)) {
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl3_warn);
+	 		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 	 	  }
 	  else if ((Humidity > 850 && Humidity <= 925) || (Humidity >= 75 && Humidity < 150)) {
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl4_warn);
+	 		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 	 	  }
 	  else {
 	 		  __HAL_TIM_SET_COMPARE (& htim1, TIM_CHANNEL_2, lvl5_warn);
+	 		 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, SET);
 	 	  }
 
 	  HD44780_Init(4);
@@ -392,7 +402,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA1 */
   GPIO_InitStruct.Pin = GPIO_PIN_1;
